@@ -1,0 +1,22 @@
+# Trigger to deploy Spinnaker in staging using helm
+resource "google_cloudbuild_trigger" "deploy-csp-spinnaker" {
+  description = "[SPINNAKER] Deploy CSP Spinnaker"
+  project = "${data.google_project.services_project.project_id}"
+  trigger_template {
+    tag_name = "${lookup("${local.spinnaker-deploy-tag}", "${data.google_project.services_project.name}-deploy-tag", "")}"
+    branch_name = "${lookup("${local.spinnaker-deploy-branch}", "${data.google_project.services_project.name}-deploy-branch", "")}"
+    repo_name   = "${google_sourcerepo_repository.engineering-acceleration-infrastructure.name}"
+  }
+  filename = "helm-charts/twistlock/cloudbuild.yaml" 
+  substitutions {
+    _CLOUDSDK_CONTAINER_CLUSTER = "${data.google_project.services_project.name}-gke"
+    _CLOUDSDK_COMPUTE_REGION = "${var.region}"
+    _SERVICES_PROJECT_ID = "${data.google_project.services_project.project_id}"
+    #_TWISTLOCK_INTERNAL_IP = "${google_compute_address.spinnaker-internal-ip-address.address}"
+    #_TWISTLOCK_API_INTERNAL_IP = "${google_compute_address.spinnaker-gate-internal-ip-address.address}"
+    _LAUNCHPAD_PROJECT_ID = "${data.google_project.launchpad_project.project_id}"
+    _ENVIRONMENT = "${var.environment}"
+    #_SECRETS_KEYRING = "engineering-acceleration-keyring"
+    #_SECRETS_KEY = "spinnaker-key"
+  }
+}
